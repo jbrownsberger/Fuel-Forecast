@@ -26,9 +26,9 @@ body{
   color:var(--text);
   background:
     linear-gradient(to bottom,
-      rgba(0,0,0,0.45) 0%,
-      rgba(0,0,0,0.62) 30%,
-      rgba(11,12,16,0.94) 62%,
+      rgba(0,0,0,0.10) 0%,
+      rgba(0,0,0,0.20) 30%,
+      rgba(11,12,16,0.82) 60%,
       rgba(11,12,16,1.00) 100%
     ),
     url('../images/red-chevy-camaro.jpg') center 45% / cover no-repeat fixed;
