@@ -18,7 +18,7 @@ const sb = createClient(SB_URL, SB_KEY);
 
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
-app.use(express.static(join(__dirname, 'images')));
+app.use('/images', express.static(join(__dirname, 'images')));
 app.use((req, res, next) => { res.header('Access-Control-Allow-Origin', '*'); next(); });
 
 // ── EIA helpers ────────────────────────────────────────────────────────────
@@ -141,7 +141,6 @@ async function sendAlerts(data){
   const now = new Date();
   for (const sub of subs){
     if (deltaCents < sub.threshold) continue;
-    // Rate-limit: no more than one alert per subscriber per 24h
     const {data:recent} = await sb.from('fuel_alert_log').select('sent_at')
       .eq('subscriber_id',sub.id).gte('sent_at',new Date(now-86400000).toISOString()).limit(1);
     if (recent?.length) continue;
@@ -201,7 +200,7 @@ app.post('/api/unsubscribe', async (req,res)=>{
   res.json({ok:true});
 });
 
-// ── Cron endpoint: POST /api/cron (called by Render cron or external scheduler)
+// ── Cron endpoint ─────────────────────────────────────────────────────────
 app.post('/api/cron', async (req,res)=>{
   const secret = req.headers['x-cron-secret'];
   if (process.env.CRON_SECRET && secret!==process.env.CRON_SECRET)
