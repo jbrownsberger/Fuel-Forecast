@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⛽ Fuel Forecast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300..700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="shell">
+  <div class="hdr">
+    <div class="hdr-icon">⛽</div>
+    <h1>Fuel Forecast</h1>
+    <p>Should you fill up now or wait?</p>
+    <div class="src-badge" id="src-badge">📊 Loading live data…</div>
+  </div>
+  <div id="app-content">
+    <div class="status" id="loading">⏳ Fetching live fuel data…</div>
+  </div>
+</div>
+<template id="app-template">
+  <div class="verdict" id="verdict-card">
+    <div class="verdict-icon" id="verdict-icon"></div>
+    <div>
+      <div class="verdict-label">Recommendation</div>
+      <div class="verdict-text" id="verdict-text"></div>
+      <div class="verdict-sub" id="verdict-sub"></div>
+      <div class="conf-pill" id="verdict-conf"></div>
+    </div>
+  </div>
+  <div class="today">
+    <div>
+      <div class="today-lbl">US Average · Today</div>
+      <div class="today-price" id="today-price"></div>
+      <div class="today-range" id="today-range"></div>
+    </div>
+    <div class="today-trend" id="today-trend"></div>
+  </div>
+  <div class="section-label">Next 3 Weeks — Daily Estimate</div>
+  <div class="chart-card">
+    <p>Based on live RBOB wholesale futures with 7–10 day pump lag applied. Updated hourly.</p>
+    <canvas id="short-chart" height="160"></canvas>
+  </div>
+  <div class="section-label">Monthly Outlook (EIA STEO)</div>
+  <div class="strip" id="monthly-strip"></div>
+  <div class="chart-card">
+    <p>Central estimate with uncertainty band — EIA Short-Term Energy Outlook + seasonal model</p>
+    <canvas id="monthly-chart" height="160"></canvas>
+  </div>
+  <div class="caveat">
+    <strong>What could change this:</strong>
+    Short-term estimates use live RBOB futures; a sudden crude shock or refinery outage can move
+    prices outside the band within days. Monthly figures assume gradual Hormuz normalization
+    and are directional, not precise. Confidence widens with time.
+  </div>
+  <div class="footer">
+    Short-term: <a href="https://www.eia.gov/opendata/" target="_blank">EIA Open Data API</a> ·
+    Monthly: <a href="https://www.eia.gov/outlooks/steo/" target="_blank">EIA STEO May 2026</a> ·
+    History: <a href="https://fred.stlouisfed.org/series/GASREGCOVW" target="_blank">FRED GASREGCOVW</a>
+  </div>
+</template>
+<script src="app.js"></script>
+</body>
+</html>
