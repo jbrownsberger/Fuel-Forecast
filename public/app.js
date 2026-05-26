@@ -1,15 +1,46 @@
 const API='/api/data';
 const SC={RISING:'#e07050',FALLING:'#5aaa7a',FLAT:'#8a90a8'};
 const SIG={RISING:'Rising',FALLING:'Falling',FLAT:'Flat'};
-let showIndiana=true;
 let shortChartInstance=null;
+
+// State offsets relative to US average (cents/gal, based on EIA regional data)
+const STATE_OFFSETS={
+  'US National':0,
+  'Alabama':-14,'Alaska':30,'Arizona':2,'Arkansas':-16,'California':62,
+  'Colorado':5,'Connecticut':12,'Delaware':2,'Florida':4,'Georgia':-12,
+  'Hawaii':75,'Idaho':8,'Illinois':18,'Indiana':-5,'Iowa':-8,
+  'Kansas':-10,'Kentucky':-12,'Louisiana':-15,'Maine':10,'Maryland':6,
+  'Massachusetts':14,'Michigan':8,'Minnesota':2,'Mississippi':-16,'Missouri':-12,
+  'Montana':4,'Nebraska':-6,'Nevada':20,'New Hampshire':8,'New Jersey':4,
+  'New Mexico':2,'New York':16,'North Carolina':-4,'North Dakota':-4,'Ohio':-2,
+  'Oklahoma':-14,'Oregon':18,'Pennsylvania':10,'Rhode Island':10,'South Carolina':-14,
+  'South Dakota':-4,'Tennessee':-12,'Texas':-12,'Utah':6,'Vermont':12,
+  'Virginia':2,'Washington':24,'West Virginia':2,'Wisconsin':2,'Wyoming':-2,
+  'Washington DC':14
+};
+
+let currentState='Indiana';
 
 function confClass(c){return c>=70?'conf-high':c>=55?'conf-med':'conf-low';}
 function fmtDate(iso){return new Date(iso+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fmtDay(iso){const d=new Date(iso+'T12:00:00');const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];return `${days[d.getDay()]} ${fmtDate(iso)}`;}
 
-function buildShortChart(shortTerm,indiana){
-  const series=shortTerm.map(d=>indiana?d.indiana:d.national);
+function applyOffset(nationalMid, offsetCents){
+  return Math.max(nationalMid + offsetCents/100, 2.00);
+}
+
+function getStateData(shortTerm, stateName){
+  const offset = STATE_OFFSETS[stateName] ?? 0;
+  return shortTerm.map(d => {
+    const mid = Math.round(applyOffset(d.national.mid, offset)*100)/100;
+    const lo  = Math.round(applyOffset(d.national.lo,  offset)*100)/100;
+    const hi  = Math.round(applyOffset(d.national.hi,  offset)*100)/100;
+    return {date:d.date, mid, lo, hi};
+  });
+}
+
+function buildShortChart(shortTerm, stateName){
+  const series = getStateData(shortTerm, stateName);
   if(shortChartInstance)shortChartInstance.destroy();
   const ctx=document.getElementById('short-chart').getContext('2d');
   shortChartInstance=new Chart(ctx,{data:{labels:shortTerm.map(d=>fmtDate(d.date)),datasets:[
@@ -24,15 +55,15 @@ function buildShortChart(shortTerm,indiana){
   }});
 }
 
-function buildDayStrip(shortTerm,indiana){
+function buildDayStrip(shortTerm, stateName){
+  const series = getStateData(shortTerm, stateName);
   const strip=document.getElementById('day-strip');strip.innerHTML='';
-  shortTerm.forEach((d,i)=>{
-    const s=indiana?d.indiana:d.national;
-    const prev=i>0?(indiana?shortTerm[i-1].indiana.mid:shortTerm[i-1].national.mid):s.mid;
+  series.forEach((s,i)=>{
+    const prev=i>0?series[i-1].mid:s.mid;
     const delta=s.mid-prev;
     const sig=Math.abs(delta)<0.01?'FLAT':delta>0?'RISING':'FALLING';
     const arrow=sig==='RISING'?'+ ':sig==='FALLING'?'- ':'';
-    const lbl=i===0?'Today':i===1?'Tomorrow':fmtDay(d.date);
+    const lbl=i===0?'Today':i===1?'Tomorrow':fmtDay(shortTerm[i].date);
     const el=document.createElement('div');
     el.className='day-tile'+(i===0?' today-tile':'');
     el.innerHTML=`<div class="dt-label">${lbl}</div><div class="dt-sig" style="color:${SC[sig]}">${SIG[sig]}</div><div class="dt-price" style="color:${SC[sig]}">$${s.mid.toFixed(2)}</div><div class="dt-arrow" style="color:${SC[sig]}">${arrow}${Math.abs(delta*100).toFixed(0)}c</div><div class="dt-range">$${s.lo.toFixed(2)}-$${s.hi.toFixed(2)}</div>`;
@@ -54,14 +85,37 @@ function buildMonthlyChart(monthly){
   }});
 }
 
-function buildMonthlyStrip(monthly){
+function buildMonthlyStrip(monthly, stateName){
+  const offset = (STATE_OFFSETS[stateName] ?? 0) / 100;
   const strip=document.getElementById('monthly-strip');strip.innerHTML='';
   monthly.forEach((d,i)=>{
-    const sig=i===0?'RISING':d.mid<monthly[i-1].mid?'FALLING':d.mid>monthly[i-1].mid?'RISING':'FLAT';
+    const mid = Math.round((d.mid+offset)*100)/100;
+    const lo  = Math.round((d.lo +offset)*100)/100;
+    const hi  = Math.round((d.hi +offset)*100)/100;
+    const prev = i===0?mid:Math.round((monthly[i-1].mid+offset)*100)/100;
+    const sig=i===0?'FLAT':mid<prev?'FALLING':mid>prev?'RISING':'FLAT';
     const el=document.createElement('div');
     el.className='day-card'+(i===0?' active':'');
-    el.innerHTML=`<div class="day-month">${d.label}</div><div class="day-sig" style="color:${SC[sig]}">${SIG[sig]}</div><div class="day-price" style="color:${SC[sig]}">$${d.mid.toFixed(2)}</div><div class="day-range">$${d.lo.toFixed(2)} - $${d.hi.toFixed(2)}</div><div class="day-conf ${confClass(d.conf)}">${d.conf}% conf</div>`;
+    el.innerHTML=`<div class="day-month">${d.label}</div><div class="day-sig" style="color:${SC[sig]}">${SIG[sig]}</div><div class="day-price" style="color:${SC[sig]}">$${mid.toFixed(2)}</div><div class="day-range">$${lo.toFixed(2)} - $${hi.toFixed(2)}</div><div class="day-conf ${confClass(d.conf)}">${d.conf}% conf</div>`;
     strip.appendChild(el);
+  });
+}
+
+function buildStateSelect(shortTerm, monthly){
+  const row = document.getElementById('state-row');
+  const sel = document.getElementById('state-select');
+  // Populate options
+  Object.keys(STATE_OFFSETS).forEach(name=>{
+    const opt=document.createElement('option');
+    opt.value=opt.textContent=name;
+    if(name===currentState)opt.selected=true;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change',e=>{
+    currentState=e.target.value;
+    buildDayStrip(shortTerm,currentState);
+    buildShortChart(shortTerm,currentState);
+    buildMonthlyStrip(monthly,currentState);
   });
 }
 
@@ -79,15 +133,6 @@ function setupSubscribeForm(){
       msg.textContent=j.ok?'Subscribed. Check your email.':'Error: '+j.error;
       if(j.ok)form.reset();
     }catch{msg.textContent='Could not subscribe. Try again.';}
-  });
-}
-
-function setupToggle(shortTerm){
-  document.getElementById('region-toggle').addEventListener('change',e=>{
-    showIndiana=e.target.checked;
-    document.getElementById('region-label').textContent=showIndiana?'Indiana':'US National';
-    buildDayStrip(shortTerm,showIndiana);
-    buildShortChart(shortTerm,showIndiana);
   });
 }
 
@@ -119,11 +164,11 @@ function render(data){
     `Refinery: <span class="kpi-val">${kpis.refineryUtil.toFixed(1)}%</span>`
   ].join('<br>');
 
-  buildDayStrip(shortTerm,showIndiana);
-  buildShortChart(shortTerm,showIndiana);
-  buildMonthlyStrip(monthly);
+  buildStateSelect(shortTerm, monthly);
+  buildDayStrip(shortTerm, currentState);
+  buildShortChart(shortTerm, currentState);
+  buildMonthlyStrip(monthly, currentState);
   buildMonthlyChart(monthly);
-  setupToggle(shortTerm);
   setupSubscribeForm();
 }
 

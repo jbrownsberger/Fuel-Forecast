@@ -50,13 +50,9 @@
     </div>
   </div>
 
-  <div class="toggle-row">
-    <span class="toggle-label">Region:</span>
-    <label class="toggle-switch">
-      <input type="checkbox" id="region-toggle" checked>
-      <span class="toggle-slider"></span>
-    </label>
-    <span id="region-label">Indiana</span>
+  <div class="state-row" id="state-row">
+    <label for="state-select">State:</label>
+    <select class="state-select" id="state-select"></select>
   </div>
 
   <div class="section-label">Next 3 Weeks &mdash; Day by Day</div>
@@ -93,8 +89,8 @@
   <div class="caveat">
     <strong>Methodology:</strong> Short-term estimates blend NYMEX RBOB futures (60%) and EIA RBOB spot (30%)
     with a Brent-WTI spread signal (10%). An asymmetric lag applies crude price rises faster (7 days) than falls
-    (14 days). Indiana prices apply a -5 cent regional offset. Monthly figures are from the EIA STEO.
-    Confidence widens with time. Subscriber data stored in Supabase.
+    (14 days). State prices apply a fixed regional offset derived from EIA regional data.
+    Monthly figures are from the EIA STEO. Confidence widens with time.
   </div>
 
   <div class="footer">
