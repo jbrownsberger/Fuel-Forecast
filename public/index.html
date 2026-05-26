@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⛽ Fuel Forecast</title>
+<title>Fuel Forecast</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300..700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -11,78 +11,104 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<div class="shell">
-  <div class="hdr">
-    <div class="hdr-icon">⛽</div>
+
+<div class="hero">
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Live EIA Data</div>
     <h1>Fuel Forecast</h1>
-    <p>Should you fill up now or wait?</p>
-    <div class="src-badge" id="src-badge">📊 Loading live data…</div>
+    <p>Should you fill up now, or wait?</p>
+    <div class="src-badge" id="src-badge">Loading live data...</div>
   </div>
-  <div id="app-content"><div class="status">⏳ Fetching live fuel data…</div></div>
 </div>
+
+<div class="shell">
+  <div id="app-content"><div class="status">Fetching live fuel data...</div></div>
+</div>
+
 <template id="app-template">
+
   <div class="verdict" id="verdict-card">
-    <div class="verdict-icon" id="verdict-icon"></div>
     <div>
       <div class="verdict-label">Recommendation</div>
       <div class="verdict-text" id="verdict-text"></div>
-      <div class="verdict-sub" id="verdict-sub"></div>
-      <div class="conf-pill" id="verdict-conf"></div>
+      <div class="verdict-sub"  id="verdict-sub"></div>
+      <div class="conf-pill"    id="verdict-conf"></div>
     </div>
   </div>
-  <div class="today">
-    <div>
-      <div class="today-lbl">US Average · Today</div>
+
+  <div class="today-row">
+    <div class="today-card">
+      <div class="today-lbl">US Average</div>
       <div class="today-price" id="today-price"></div>
       <div class="today-range" id="today-range"></div>
     </div>
-    <div class="today-trend" id="today-trend"></div>
+    <div class="today-card">
+      <div class="today-lbl">Week-over-Week</div>
+      <div class="today-trend" id="today-trend"></div>
+    </div>
+    <div class="today-card">
+      <div class="today-lbl">Market Signals</div>
+      <div class="kpi-list" id="kpi-list"></div>
+    </div>
   </div>
-  <div class="kpi-row">
-    <span class="kpi-pill" id="kpi-brent-wti"></span>
-    <span class="kpi-pill" id="kpi-inv"></span>
-    <span class="kpi-pill" id="kpi-refinery"></span>
-  </div>
+
   <div class="toggle-row">
-    <span class="toggle-label">Show prices for:</span>
-    <label class="toggle-switch"><input type="checkbox" id="region-toggle" checked><span class="toggle-slider"></span></label>
+    <span class="toggle-label">Region:</span>
+    <label class="toggle-switch">
+      <input type="checkbox" id="region-toggle" checked>
+      <span class="toggle-slider"></span>
+    </label>
     <span id="region-label">Indiana</span>
   </div>
+
   <div class="section-label">Next 3 Weeks — Day by Day</div>
   <div class="day-strip-wrap"><div class="day-strip" id="day-strip"></div></div>
+
   <div class="chart-card" style="margin-top:16px;">
-    <p>RBOB futures + spot composite with asymmetric pump lag. Updated hourly.</p>
+    <div class="chart-caption">RBOB futures + spot composite with asymmetric pump lag. Updated hourly.</div>
     <canvas id="short-chart" height="160"></canvas>
   </div>
+
   <div class="section-label">Monthly Outlook (EIA STEO)</div>
   <div class="strip" id="monthly-strip"></div>
   <div class="chart-card">
-    <p>Central estimate with uncertainty band — EIA Short-Term Energy Outlook</p>
+    <div class="chart-caption">Central estimate with uncertainty band — EIA Short-Term Energy Outlook</div>
     <canvas id="monthly-chart" height="160"></canvas>
   </div>
+
   <div class="subscribe-card">
-    <div class="subscribe-title">🔔 Price Alerts</div>
-    <p class="subscribe-desc">Get an email when the 2-week forecast moves by more than your chosen threshold.</p>
+    <div class="subscribe-title">Price Alerts</div>
+    <p class="subscribe-desc">Receive an email when the 2-week forecast moves beyond your chosen threshold.</p>
     <form id="subscribe-form" class="subscribe-form">
       <input type="email" id="sub-email" placeholder="you@example.com" required>
       <select id="sub-threshold">
-        <option value="5">Alert if prices shift 5¢+</option>
-        <option value="10" selected>Alert if prices shift 10¢+</option>
-        <option value="15">Alert if prices shift 15¢+</option>
-        <option value="20">Alert if prices shift 20¢+</option>
+        <option value="5">Alert if prices shift 5 cents+</option>
+        <option value="10" selected>Alert if prices shift 10 cents+</option>
+        <option value="15">Alert if prices shift 15 cents+</option>
+        <option value="20">Alert if prices shift 20 cents+</option>
       </select>
       <button type="submit">Subscribe</button>
     </form>
     <div id="subscribe-msg" class="subscribe-msg"></div>
   </div>
-  <div class="caveat"><strong>Methodology:</strong> Short-term estimates blend NYMEX RBOB futures (60%) and EIA RBOB spot (30%) with a Brent–WTI spread signal (10%). An asymmetric lag applies crude price rises faster (7 days) than falls (14 days). Indiana prices apply a −5¢ regional offset. Confidence widens with time.</div>
+
+  <div class="caveat">
+    <strong>Methodology:</strong> Short-term estimates blend NYMEX RBOB futures (60%) and EIA RBOB spot (30%)
+    with a Brent-WTI spread signal (10%). An asymmetric lag applies crude price rises faster (7 days) than falls
+    (14 days). Indiana prices apply a -5 cent regional offset. Monthly figures are from the EIA STEO.
+    Confidence widens with time. Subscriber data stored in Supabase.
+  </div>
+
   <div class="footer">
-    <a href="https://www.eia.gov/opendata/" target="_blank">EIA Open Data</a> ·
-    <a href="https://www.eia.gov/outlooks/steo/" target="_blank">EIA STEO</a> ·
-    <a href="https://fred.stlouisfed.org/series/GASREGCOVW" target="_blank">FRED</a> ·
+    <a href="https://www.eia.gov/opendata/" target="_blank">EIA Open Data</a> &middot;
+    <a href="https://www.eia.gov/outlooks/steo/" target="_blank">EIA STEO</a> &middot;
+    <a href="https://fred.stlouisfed.org/series/GASREGCOVW" target="_blank">FRED</a> &middot;
     <a href="https://finance.yahoo.com/quote/RB=F" target="_blank">NYMEX RBOB</a>
   </div>
+
 </template>
+
 <script src="app.js"></script>
 </body>
 </html>
