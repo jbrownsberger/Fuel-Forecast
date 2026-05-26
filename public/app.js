@@ -3,7 +3,6 @@ const SC={RISING:'#e07050',FALLING:'#5aaa7a',FLAT:'#8a90a8'};
 const SIG={RISING:'Rising',FALLING:'Falling',FLAT:'Flat'};
 let shortChartInstance=null;
 
-// State offsets relative to US average (cents/gal, based on EIA regional data)
 const STATE_OFFSETS={
   'US National':0,
   'Alabama':-14,'Alaska':30,'Arizona':2,'Arkansas':-16,'California':62,
@@ -21,35 +20,32 @@ const STATE_OFFSETS={
 
 let currentState='Indiana';
 
-function confClass(c){return c>=70?'conf-high':c>=55?'conf-med':'conf-low';}
 function fmtDate(iso){return new Date(iso+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fmtDay(iso){const d=new Date(iso+'T12:00:00');const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];return `${days[d.getDay()]} ${fmtDate(iso)}`;}
 
-function applyOffset(nationalMid, offsetCents){
-  return Math.max(nationalMid + offsetCents/100, 2.00);
+function applyOffset(v, offsetCents){
+  return Math.max(v + offsetCents/100, 2.00);
 }
 
 function getStateData(shortTerm, stateName){
   const offset = STATE_OFFSETS[stateName] ?? 0;
-  return shortTerm.map(d => {
-    const mid = Math.round(applyOffset(d.national.mid, offset)*100)/100;
-    const lo  = Math.round(applyOffset(d.national.lo,  offset)*100)/100;
-    const hi  = Math.round(applyOffset(d.national.hi,  offset)*100)/100;
-    return {date:d.date, mid, lo, hi};
-  });
+  return shortTerm.map(d => ({
+    date: d.date,
+    mid: Math.round(applyOffset(d.national.mid, offset)*100)/100
+  }));
 }
 
 function buildShortChart(shortTerm, stateName){
   const series = getStateData(shortTerm, stateName);
   if(shortChartInstance)shortChartInstance.destroy();
   const ctx=document.getElementById('short-chart').getContext('2d');
-  shortChartInstance=new Chart(ctx,{data:{labels:shortTerm.map(d=>fmtDate(d.date)),datasets:[
-    {type:'line',label:'Estimate',data:series.map(d=>d.mid),borderColor:'#c8a96e',backgroundColor:'transparent',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#c8a96e',tension:0.35,order:1},
-    {type:'line',label:'High',data:series.map(d=>d.hi),borderColor:'transparent',backgroundColor:'rgba(200,169,110,0.10)',borderWidth:0,pointRadius:0,tension:0.35,fill:'+1',order:2},
-    {type:'line',label:'Low',data:series.map(d=>d.lo),borderColor:'transparent',backgroundColor:'rgba(200,169,110,0.10)',borderWidth:0,pointRadius:0,tension:0.35,fill:false,order:3},
+  shortChartInstance=new Chart(ctx,{data:{labels:series.map(d=>fmtDate(d.date)),datasets:[
+    {type:'line',label:'Estimate',data:series.map(d=>d.mid),
+     borderColor:'#c8a96e',backgroundColor:'rgba(200,169,110,0.08)',
+     borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#c8a96e',tension:0.35,fill:true}
   ]},options:{responsive:true,interaction:{mode:'index',intersect:false},
     plugins:{legend:{display:false},tooltip:{backgroundColor:'#161922',titleColor:'#e8eaf0',bodyColor:'#8a90a8',padding:10,
-      callbacks:{label:c=>{if(c.datasetIndex===0)return ` Est: $${c.parsed.y.toFixed(2)}/gal`;if(c.datasetIndex===1)return ` High: $${c.parsed.y.toFixed(2)}`;if(c.datasetIndex===2)return ` Low: $${c.parsed.y.toFixed(2)}`;} }}},
+      callbacks:{label:c=>` $${c.parsed.y.toFixed(2)}/gal`}}},
     scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a90a8',font:{size:10},maxTicksLimit:7}},
              y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a90a8',font:{size:10},callback:v=>'$'+v.toFixed(2)}}}
   }});
@@ -66,7 +62,7 @@ function buildDayStrip(shortTerm, stateName){
     const lbl=i===0?'Today':i===1?'Tomorrow':fmtDay(shortTerm[i].date);
     const el=document.createElement('div');
     el.className='day-tile'+(i===0?' today-tile':'');
-    el.innerHTML=`<div class="dt-label">${lbl}</div><div class="dt-sig" style="color:${SC[sig]}">${SIG[sig]}</div><div class="dt-price" style="color:${SC[sig]}">$${s.mid.toFixed(2)}</div><div class="dt-arrow" style="color:${SC[sig]}">${arrow}${Math.abs(delta*100).toFixed(0)}c</div><div class="dt-range">$${s.lo.toFixed(2)}-$${s.hi.toFixed(2)}</div>`;
+    el.innerHTML=`<div class="dt-label">${lbl}</div><div class="dt-sig" style="color:${SC[sig]}">${SIG[sig]}</div><div class="dt-price" style="color:${SC[sig]}">$${s.mid.toFixed(2)}</div><div class="dt-arrow" style="color:${SC[sig]}">${arrow}${Math.abs(delta*100).toFixed(0)}c</div>`;
     strip.appendChild(el);
   });
 }
@@ -74,12 +70,12 @@ function buildDayStrip(shortTerm, stateName){
 function buildMonthlyChart(monthly){
   const ctx=document.getElementById('monthly-chart').getContext('2d');
   new Chart(ctx,{data:{labels:monthly.map(d=>d.label),datasets:[
-    {type:'line',label:'Central',data:monthly.map(d=>d.mid),borderColor:'#c8a96e',backgroundColor:'transparent',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#c8a96e',tension:0.35,order:1},
-    {type:'line',label:'High',data:monthly.map(d=>d.hi),borderColor:'transparent',backgroundColor:'rgba(200,169,110,0.08)',borderWidth:0,pointRadius:0,tension:0.35,fill:'+1',order:2},
-    {type:'line',label:'Low',data:monthly.map(d=>d.lo),borderColor:'transparent',backgroundColor:'rgba(200,169,110,0.08)',borderWidth:0,pointRadius:0,tension:0.35,fill:false,order:3},
+    {type:'line',label:'Central',data:monthly.map(d=>d.mid),
+     borderColor:'#c8a96e',backgroundColor:'rgba(200,169,110,0.08)',
+     borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#c8a96e',tension:0.35,fill:true}
   ]},options:{responsive:true,interaction:{mode:'index',intersect:false},
     plugins:{legend:{display:false},tooltip:{backgroundColor:'#161922',titleColor:'#e8eaf0',bodyColor:'#8a90a8',padding:10,
-      callbacks:{label:c=>{if(c.datasetIndex===0)return ` Central: $${c.parsed.y.toFixed(2)}/gal`;if(c.datasetIndex===1)return ` High: $${c.parsed.y.toFixed(2)}`;if(c.datasetIndex===2)return ` Low: $${c.parsed.y.toFixed(2)}`;} }}},
+      callbacks:{label:c=>` $${c.parsed.y.toFixed(2)}/gal`}}},
     scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a90a8',font:{size:10},maxRotation:30}},
              y:{min:2.70,max:3.80,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8a90a8',font:{size:10},callback:v=>'$'+v.toFixed(2)}}}
   }});
@@ -89,22 +85,18 @@ function buildMonthlyStrip(monthly, stateName){
   const offset = (STATE_OFFSETS[stateName] ?? 0) / 100;
   const strip=document.getElementById('monthly-strip');strip.innerHTML='';
   monthly.forEach((d,i)=>{
-    const mid = Math.round((d.mid+offset)*100)/100;
-    const lo  = Math.round((d.lo +offset)*100)/100;
-    const hi  = Math.round((d.hi +offset)*100)/100;
+    const mid  = Math.round((d.mid+offset)*100)/100;
     const prev = i===0?mid:Math.round((monthly[i-1].mid+offset)*100)/100;
-    const sig=i===0?'FLAT':mid<prev?'FALLING':mid>prev?'RISING':'FLAT';
+    const sig  = i===0?'FLAT':mid<prev?'FALLING':mid>prev?'RISING':'FLAT';
     const el=document.createElement('div');
     el.className='day-card'+(i===0?' active':'');
-    el.innerHTML=`<div class="day-month">${d.label}</div><div class="day-sig" style="color:${SC[sig]}">${SIG[sig]}</div><div class="day-price" style="color:${SC[sig]}">$${mid.toFixed(2)}</div><div class="day-range">$${lo.toFixed(2)} - $${hi.toFixed(2)}</div><div class="day-conf ${confClass(d.conf)}">${d.conf}% conf</div>`;
+    el.innerHTML=`<div class="day-month">${d.label}</div><div class="day-sig" style="color:${SC[sig]}">${SIG[sig]}</div><div class="day-price" style="color:${SC[sig]}">$${mid.toFixed(2)}</div>`;
     strip.appendChild(el);
   });
 }
 
 function buildStateSelect(shortTerm, monthly){
-  const row = document.getElementById('state-row');
-  const sel = document.getElementById('state-select');
-  // Populate options
+  const sel=document.getElementById('state-select');
   Object.keys(STATE_OFFSETS).forEach(name=>{
     const opt=document.createElement('option');
     opt.value=opt.textContent=name;
@@ -148,17 +140,15 @@ function render(data){
   const vc=document.getElementById('verdict-card');vc.classList.add(verdict.color);
   document.getElementById('verdict-text').textContent=verdict.verdict;
   document.getElementById('verdict-sub').textContent=verdict.reason;
-  document.getElementById('verdict-conf').textContent=`${verdict.confidence}% confidence`;
 
   const retail=kpis.retailNow,delta=kpis.retailChange;
   document.getElementById('today-price').textContent=`$${retail.toFixed(2)}`;
-  document.getElementById('today-range').textContent=`Range: $${(retail-0.07).toFixed(2)} - $${(retail+0.10).toFixed(2)}`;
+  document.getElementById('today-range').textContent=`Range: $${(retail-0.07).toFixed(2)} – $${(retail+0.10).toFixed(2)}`;
   const tc=delta>0?'var(--up)':delta<0?'var(--down)':'var(--flat)';
   const tl=delta>0?'Rising':delta<0?'Falling':'Flat';
   document.getElementById('today-trend').innerHTML=`<span style="color:${tc};font-size:1.1rem;font-weight:700">${tl}</span><br><span style="font-size:.75rem;color:var(--muted)">${delta>=0?'+':''}${(delta*100).toFixed(1)}c week over week</span>`;
 
-  const kpiEl=document.getElementById('kpi-list');
-  kpiEl.innerHTML=[
+  document.getElementById('kpi-list').innerHTML=[
     `Brent-WTI: <span class="kpi-val">${kpis.brentWtiSpread>0?'+':''}${kpis.brentWtiSpread.toFixed(1)}</span>`,
     `Inventory: <span class="kpi-val">${kpis.inventoryChangeMbbl>0?'+':''}${kpis.inventoryChangeMbbl.toFixed(1)} Mbbl</span>`,
     `Refinery: <span class="kpi-val">${kpis.refineryUtil.toFixed(1)}%</span>`

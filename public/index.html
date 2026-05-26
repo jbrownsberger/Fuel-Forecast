@@ -26,12 +26,9 @@
 <template id="app-template">
 
   <div class="verdict" id="verdict-card">
-    <div>
-      <div class="verdict-label">Recommendation</div>
-      <div class="verdict-text" id="verdict-text"></div>
-      <div class="verdict-sub"  id="verdict-sub"></div>
-      <div class="conf-pill"    id="verdict-conf"></div>
-    </div>
+    <div class="verdict-label">Recommendation</div>
+    <div class="verdict-text" id="verdict-text"></div>
+    <div class="verdict-sub"  id="verdict-sub"></div>
   </div>
 
   <div class="today-row">
@@ -66,7 +63,7 @@
   <div class="section-label">Monthly Outlook (EIA STEO)</div>
   <div class="strip" id="monthly-strip"></div>
   <div class="chart-card">
-    <div class="chart-caption">Central estimate with uncertainty band &mdash; EIA Short-Term Energy Outlook</div>
+    <div class="chart-caption">Central estimate &mdash; EIA Short-Term Energy Outlook</div>
     <canvas id="monthly-chart" height="160"></canvas>
   </div>
 
@@ -90,7 +87,7 @@
     <strong>Methodology:</strong> Short-term estimates blend NYMEX RBOB futures (60%) and EIA RBOB spot (30%)
     with a Brent-WTI spread signal (10%). An asymmetric lag applies crude price rises faster (7 days) than falls
     (14 days). State prices apply a fixed regional offset derived from EIA regional data.
-    Monthly figures are from the EIA STEO. Confidence widens with time.
+    Monthly figures are from the EIA STEO.
   </div>
 
   <div class="footer">
