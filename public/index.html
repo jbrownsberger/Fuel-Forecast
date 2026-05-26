@@ -18,9 +18,7 @@
     <p>Should you fill up now or wait?</p>
     <div class="src-badge" id="src-badge">📊 Loading live data…</div>
   </div>
-  <div id="app-content">
-    <div class="status" id="loading">⏳ Fetching live fuel data…</div>
-  </div>
+  <div id="app-content"><div class="status">⏳ Fetching live fuel data…</div></div>
 </div>
 <template id="app-template">
   <div class="verdict" id="verdict-card">
@@ -40,27 +38,49 @@
     </div>
     <div class="today-trend" id="today-trend"></div>
   </div>
-  <div class="section-label">Next 3 Weeks — Daily Estimate</div>
-  <div class="chart-card">
-    <p>Based on live RBOB wholesale futures with 7–10 day pump lag applied. Updated hourly.</p>
+  <div class="kpi-row">
+    <span class="kpi-pill" id="kpi-brent-wti"></span>
+    <span class="kpi-pill" id="kpi-inv"></span>
+    <span class="kpi-pill" id="kpi-refinery"></span>
+  </div>
+  <div class="toggle-row">
+    <span class="toggle-label">Show prices for:</span>
+    <label class="toggle-switch"><input type="checkbox" id="region-toggle" checked><span class="toggle-slider"></span></label>
+    <span id="region-label">Indiana</span>
+  </div>
+  <div class="section-label">Next 3 Weeks — Day by Day</div>
+  <div class="day-strip-wrap"><div class="day-strip" id="day-strip"></div></div>
+  <div class="chart-card" style="margin-top:16px;">
+    <p>RBOB futures + spot composite with asymmetric pump lag. Updated hourly.</p>
     <canvas id="short-chart" height="160"></canvas>
   </div>
   <div class="section-label">Monthly Outlook (EIA STEO)</div>
   <div class="strip" id="monthly-strip"></div>
   <div class="chart-card">
-    <p>Central estimate with uncertainty band — EIA Short-Term Energy Outlook + seasonal model</p>
+    <p>Central estimate with uncertainty band — EIA Short-Term Energy Outlook</p>
     <canvas id="monthly-chart" height="160"></canvas>
   </div>
-  <div class="caveat">
-    <strong>What could change this:</strong>
-    Short-term estimates use live RBOB futures; a sudden crude shock or refinery outage can move
-    prices outside the band within days. Monthly figures assume gradual Hormuz normalization
-    and are directional, not precise. Confidence widens with time.
+  <div class="subscribe-card">
+    <div class="subscribe-title">🔔 Price Alerts</div>
+    <p class="subscribe-desc">Get an email when the 2-week forecast moves by more than your chosen threshold.</p>
+    <form id="subscribe-form" class="subscribe-form">
+      <input type="email" id="sub-email" placeholder="you@example.com" required>
+      <select id="sub-threshold">
+        <option value="5">Alert if prices shift 5¢+</option>
+        <option value="10" selected>Alert if prices shift 10¢+</option>
+        <option value="15">Alert if prices shift 15¢+</option>
+        <option value="20">Alert if prices shift 20¢+</option>
+      </select>
+      <button type="submit">Subscribe</button>
+    </form>
+    <div id="subscribe-msg" class="subscribe-msg"></div>
   </div>
+  <div class="caveat"><strong>Methodology:</strong> Short-term estimates blend NYMEX RBOB futures (60%) and EIA RBOB spot (30%) with a Brent–WTI spread signal (10%). An asymmetric lag applies crude price rises faster (7 days) than falls (14 days). Indiana prices apply a −5¢ regional offset. Confidence widens with time.</div>
   <div class="footer">
-    Short-term: <a href="https://www.eia.gov/opendata/" target="_blank">EIA Open Data API</a> ·
-    Monthly: <a href="https://www.eia.gov/outlooks/steo/" target="_blank">EIA STEO May 2026</a> ·
-    History: <a href="https://fred.stlouisfed.org/series/GASREGCOVW" target="_blank">FRED GASREGCOVW</a>
+    <a href="https://www.eia.gov/opendata/" target="_blank">EIA Open Data</a> ·
+    <a href="https://www.eia.gov/outlooks/steo/" target="_blank">EIA STEO</a> ·
+    <a href="https://fred.stlouisfed.org/series/GASREGCOVW" target="_blank">FRED</a> ·
+    <a href="https://finance.yahoo.com/quote/RB=F" target="_blank">NYMEX RBOB</a>
   </div>
 </template>
 <script src="app.js"></script>

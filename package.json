@@ -1,7 +1,7 @@
 {
   "name": "fuel-forecast",
-  "version": "1.0.0",
-  "description": "Gas price weather forecast app",
+  "version": "2.0.0",
+  "description": "Gas price weather forecast app with email alerts",
   "main": "server.js",
   "type": "module",
   "scripts": {
